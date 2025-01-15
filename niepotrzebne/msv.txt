@@ -1,0 +1,287 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_translate/flutter_translate.dart';
+import 'container_manager_view.dart';
+import '../database_helper.dart';
+
+class ManageStorageView extends StatefulWidget {
+  const ManageStorageView({Key? key}) : super(key: key);
+
+  @override
+  ManageStorageViewState createState() => ManageStorageViewState();
+}
+
+class ManageStorageViewState extends State<ManageStorageView> {
+  List<Map<String, dynamic>> shelfUnits = [];
+  List<Map<String, dynamic>> boxes = [];
+  List<Map<String, dynamic>> exhibits = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    try {
+      final fetchedShelfUnits = await DatabaseHelper().getShelfUnits();
+      final fetchedBoxes = await DatabaseHelper().getBoxes();
+      final fetchedExhibits = await DatabaseHelper().getExhibits();
+
+      setState(() {
+        shelfUnits = fetchedShelfUnits;
+        boxes = fetchedBoxes;
+        exhibits = fetchedExhibits;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Błąd podczas ładowania danych: $e')),
+      );
+    }
+  }
+
+  void _showShelfUnitsDialog() async {
+    await _loadData();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(translate('shelfUnits')),
+          content: SizedBox(
+            width: 300,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: shelfUnits.length,
+              itemBuilder: (context, index) {
+                final shelfUnit = shelfUnits[index];
+                return ListTile(
+                  title: Text(shelfUnit['name']),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                          content: Text('Wybrano regał: ${shelfUnit['name']}')),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(translate('back')),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showBoxesDialog() async {
+    await _loadData();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(translate('boxes')),
+          content: SizedBox(
+            width: 300,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: boxes.length,
+              itemBuilder: (context, index) {
+                final box = boxes[index];
+                return ListTile(
+                  title: Text(box['name']),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                          content: Text('Wybrano pudełko: ${box['name']}')),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(translate('back')),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showExhibitsDialog() async {
+    await _loadData();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(translate('exhibits')),
+          content: SizedBox(
+            width: 300,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: exhibits.length,
+              itemBuilder: (context, index) {
+                final exhibit = exhibits[index];
+                return ListTile(
+                  title: Text(exhibit['name']),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                          content: Text('Wybrano wystawę: ${exhibit['name']}')),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(translate('back')),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showSelectionDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(translate('selectOption')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.shelves),
+                title: Text(translate('shelfDetails')),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _showShelfUnitsDialog();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.archive),
+                title: Text(translate('boxDetails')),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _showBoxesDialog();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.density_medium),
+                title: Text(translate('exhibitDetails')),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _showExhibitsDialog();
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(translate('cancel')),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _navigateToContainerManager() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ContainerManagerView(),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(translate('physicalWarehouse')),
+      ),
+      body: Stack(
+        children: [
+          // Pionowa ściana po lewej stronie
+          Positioned(
+            top: 0,
+            left: 10, // Odsunięcie minimalnie od lewej krawędzi
+            bottom: 0, // Rozciągnięcie do samego dołu
+            child: Container(
+              width: 10, // Szerokość ściany
+              color: Colors.grey, // Kolor ściany
+            ),
+          ),
+          // Podłoga na całej szerokości programu
+          Positioned(
+            bottom: 0, // Umieszczone na samym dole
+            left: 0,
+            right: 0,
+            child: Container(
+              height: 130, // Wysokość podłogi
+              color: Colors.grey, // Kolor podłogi
+            ),
+          ),
+          // Główna zawartość
+          Center(
+            child: Text(
+              translate('contentHere'),
+              style: const TextStyle(fontSize: 18),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: Container(
+        margin: const EdgeInsets.only(bottom: 50), // Przycisk tuż nad podłogą
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            FloatingActionButton(
+              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(translate('zoomIn'))),
+              ),
+              tooltip: translate('zoomIn'),
+              child: const Icon(Icons.zoom_in),
+            ),
+            FloatingActionButton(
+              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(translate('zoomOut'))),
+              ),
+              tooltip: translate('zoomOut'),
+              child: const Icon(Icons.zoom_out),
+            ),
+            const SizedBox(width: 20), // Przerwa między grupami przycisków
+            FloatingActionButton(
+              onPressed: _showSelectionDialog,
+              tooltip: translate('addFeature'),
+              child: const Icon(Icons.add),
+            ),
+            FloatingActionButton(
+              onPressed: _navigateToContainerManager,
+              tooltip: translate('goToContainerManager'),
+              child: const Icon(Icons.shelves),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

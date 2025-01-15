@@ -1,0 +1,356 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Import dla FilteringTextInputFormatter
+import 'package:flutter_translate/flutter_translate.dart';
+import 'package:sqflite/sqflite.dart';
+import '../../database_helper.dart';
+
+Future<void> showAddShelfDialog(
+  BuildContext context, 
+  Database db) async {
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController shelfCountController = TextEditingController();
+  bool sameShelf = false;
+  bool isNameEmpty = false;
+  bool isShelfCountEmpty = false;
+  bool isSameShelfHeightEmpty = false;
+  bool isSameShelfWidthEmpty = false;
+  bool isSameShelfDepthEmpty = false;
+  bool horizontalShelf = true; // Domyślnie poziome
+
+  List<Map<String, double>> shelves = [];
+  List<bool> shelvesErrors = []; // Lista błędów dla półek
+  Map<String, double> sameShelfDimensions = {
+    'height': 0.0,
+    'width': 0.0,
+    'depth': 0.0
+  };
+
+  // Filtr pozwalający tylko na cyfry i separator dziesiętny
+  final List<TextInputFormatter> numberInputFormatter = [
+    FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')), // Cyfry i "."
+  ];
+
+  // Wyświetl komunikat o rozmiarach wewnętrznych
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(translate('pleaseProvideInternalDimensions')),
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  });
+
+  await showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return StatefulBuilder(
+        builder: (BuildContext context, StateSetter setState) {
+          return AlertDialog(
+            title: Text(translate('addCabinet')),
+            content: SingleChildScrollView(
+              child: Column(
+                children: [
+                  // Nazwa regału
+                  TextField(
+                    controller: nameController,
+                    decoration: InputDecoration(
+                      labelText: translate('cabinetName'),
+                      errorText:
+                          isNameEmpty ? translate('fieldRequired') : null,
+                    ),
+                  ),
+                  SizedBox(height: 16.0),
+
+                  // Liczba półek
+                  TextField(
+                    controller: shelfCountController,
+                    decoration: InputDecoration(
+                      labelText: translate('shelfCount'),
+                      errorText:
+                          isShelfCountEmpty ? translate('fieldRequired') : null,
+                    ),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: numberInputFormatter, // Blokowanie liter
+                    onChanged: (value) {
+                      int count = int.tryParse(value) ?? 0;
+                      setState(() {
+                        shelves = List.generate(
+                          count,
+                          (_) => {'height': 0.0, 'width': 0.0, 'depth': 0.0},
+                        );
+                        shelvesErrors = List.generate(count, (_) => false);
+                      });
+                    },
+                  ),
+                  SizedBox(height: 16.0),
+
+                  // Suwak: Czy półki mają te same wymiary?
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        translate('doTheyhaveTheSameDimensions'),
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                      Switch(
+                        value: sameShelf,
+                        onChanged: (bool value) {
+                          setState(() {
+                            sameShelf = value;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        translate(
+                            'shelfOrientation'), // Klucz tłumaczenia, np. "Półki są:"
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                      SizedBox(height: 8.0),
+                      SegmentedButton<String>(
+                        segments: const <ButtonSegment<String>>[
+                          ButtonSegment(
+                            value: 'horizontal',
+                            label: Text('Poziome'), // Etykieta przycisku
+                          ),
+                          ButtonSegment(
+                            value: 'vertical',
+                            label: Text('Pionowe'), // Etykieta przycisku
+                          ),
+                        ],
+                        selected: <String>{
+                          horizontalShelf ? 'horizontal' : 'vertical'
+                        },
+                        onSelectionChanged: (Set<String> newSelection) {
+                          setState(() {
+                            horizontalShelf =
+                                newSelection.first == 'horizontal';
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+
+                  // Pola wymiarów, jeśli półki mają te same wymiary
+                  if (sameShelf)
+                    Column(
+                      children: [
+                        TextField(
+                          decoration: InputDecoration(
+                            labelText: translate('height'),
+                            errorText: isSameShelfHeightEmpty
+                                ? translate('fieldRequired')
+                                : null,
+                          ),
+                          keyboardType: TextInputType.number,
+                          inputFormatters:
+                              numberInputFormatter, // Blokowanie liter
+                          onChanged: (value) {
+                            setState(() {
+                              sameShelfDimensions['height'] =
+                                  double.tryParse(value) ?? 0.0;
+                              isSameShelfHeightEmpty = false;
+                            });
+                          },
+                        ),
+                        TextField(
+                          decoration: InputDecoration(
+                            labelText: translate('width'),
+                            errorText: isSameShelfWidthEmpty
+                                ? translate('fieldRequired')
+                                : null,
+                          ),
+                          keyboardType: TextInputType.number,
+                          inputFormatters:
+                              numberInputFormatter, // Blokowanie liter
+                          onChanged: (value) {
+                            setState(() {
+                              sameShelfDimensions['width'] =
+                                  double.tryParse(value) ?? 0.0;
+                              isSameShelfWidthEmpty = false;
+                            });
+                          },
+                        ),
+                        TextField(
+                          decoration: InputDecoration(
+                            labelText: translate('depth'),
+                            errorText: isSameShelfDepthEmpty
+                                ? translate('fieldRequired')
+                                : null,
+                          ),
+                          keyboardType: TextInputType.number,
+                          inputFormatters:
+                              numberInputFormatter, // Blokowanie liter
+                          onChanged: (value) {
+                            setState(() {
+                              sameShelfDimensions['depth'] =
+                                  double.tryParse(value) ?? 0.0;
+                              isSameShelfDepthEmpty = false;
+                            });
+                          },
+                        ),
+                      ],
+                    )
+                  // Pola wymiarów dla każdej półki
+                  else if (shelves.isNotEmpty)
+                    Column(
+                      children: shelves.asMap().entries.map((entry) {
+                        int index = entry.key;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(height: 16.0),
+                            Text(
+                              translate('shelfDimensions',
+                                  args: {'index': '${index + 1}'}),
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            TextField(
+                              decoration: InputDecoration(
+                                labelText: translate('height'),
+                                errorText: shelvesErrors[index]
+                                    ? translate('fieldRequired')
+                                    : null,
+                              ),
+                              keyboardType: TextInputType.number,
+                              inputFormatters:
+                                  numberInputFormatter, // Blokowanie liter
+                              onChanged: (value) {
+                                shelves[index]['height'] =
+                                    double.tryParse(value) ?? 0.0;
+                                setState(() {
+                                  shelvesErrors[index] = false;
+                                });
+                              },
+                            ),
+                            TextField(
+                              decoration: InputDecoration(
+                                labelText: translate('width'),
+                                errorText: shelvesErrors[index]
+                                    ? translate('fieldRequired')
+                                    : null,
+                              ),
+                              keyboardType: TextInputType.number,
+                              inputFormatters:
+                                  numberInputFormatter, // Blokowanie liter
+                              onChanged: (value) {
+                                shelves[index]['width'] =
+                                    double.tryParse(value) ?? 0.0;
+                                setState(() {
+                                  shelvesErrors[index] = false;
+                                });
+                              },
+                            ),
+                            TextField(
+                              decoration: InputDecoration(
+                                labelText: translate('depth'),
+                                errorText: shelvesErrors[index]
+                                    ? translate('fieldRequired')
+                                    : null,
+                              ),
+                              keyboardType: TextInputType.number,
+                              inputFormatters:
+                                  numberInputFormatter, // Blokowanie liter
+                              onChanged: (value) {
+                                shelves[index]['depth'] =
+                                    double.tryParse(value) ?? 0.0;
+                                setState(() {
+                                  shelvesErrors[index] = false;
+                                });
+                              },
+                            ),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(translate('cancel')),
+              ),
+              TextButton(
+                onPressed: () async {
+                  // Walidacja pól
+                  setState(() {
+                    isNameEmpty = nameController.text.trim().isEmpty;
+                    isShelfCountEmpty =
+                        shelfCountController.text.trim().isEmpty;
+
+                    if (sameShelf) {
+                      isSameShelfHeightEmpty =
+                          sameShelfDimensions['height'] == 0.0;
+                      isSameShelfWidthEmpty =
+                          sameShelfDimensions['width'] == 0.0;
+                      isSameShelfDepthEmpty =
+                          sameShelfDimensions['depth'] == 0.0;
+                    }
+                  });
+
+                  if (isNameEmpty ||
+                      isShelfCountEmpty ||
+                      (sameShelf &&
+                          (isSameShelfHeightEmpty ||
+                              isSameShelfWidthEmpty ||
+                              isSameShelfDepthEmpty))) {
+                    return;
+                  }
+
+                  // Próba zapisu do bazy danych
+                  int shelfUnitId = await DatabaseHelper().insertShelfUnit(
+                    db,
+                    nameController.text,
+                    int.tryParse(shelfCountController.text) ?? 0,
+                    sameShelf ? 1 : 0,
+                    horizontalShelf ? 1 : 0, // Przekazanie orientacji
+                  );
+
+                  if (shelfUnitId == -1) {
+                    // Komunikat o duplikacie
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(translate('duplicateShelfError'))),
+                    );
+                    return;
+                  }
+
+                  // Dodanie półek do bazy danych
+                  if (sameShelf) {
+                    for (var i = 0; i < shelves.length; i++) {
+                      await DatabaseHelper().insertShelf(
+                        db,
+                        shelfUnitId,
+                        sameShelfDimensions['height'] ?? 0.0,
+                        sameShelfDimensions['width'] ?? 0.0,
+                        sameShelfDimensions['depth'] ?? 0.0,
+                      );
+                    }
+                  } else {
+                    for (var shelf in shelves) {
+                      await DatabaseHelper().insertShelf(
+                        db,
+                        shelfUnitId,
+                        shelf['height'] ?? 0.0,
+                        shelf['width'] ?? 0.0,
+                        shelf['depth'] ?? 0.0,
+                      );
+                    }
+                  }
+
+                  Navigator.of(context).pop();
+                },
+                child: Text(translate('save')),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}

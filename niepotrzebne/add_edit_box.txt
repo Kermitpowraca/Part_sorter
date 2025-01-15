@@ -1,0 +1,195 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_translate/flutter_translate.dart';
+import '../../database_helper.dart';
+
+class AddEditBoxScreen extends StatefulWidget {
+  final Map<String, dynamic>? boxData;
+  final ValueChanged<Map<String, dynamic>> onSave;
+
+  const AddEditBoxScreen({
+    Key? key,
+    this.boxData,
+    required this.onSave,
+  }) : super(key: key);
+
+  @override
+  AddEditBoxScreenState createState() => AddEditBoxScreenState();
+}
+
+class AddEditBoxScreenState extends State<AddEditBoxScreen> {
+  late TextEditingController _nameController;
+  late TextEditingController _widthController;
+  late TextEditingController _heightController;
+  late TextEditingController _depthController;
+  bool _hasCompartments = false;
+  int? _compartmentsCount;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController =
+        TextEditingController(text: widget.boxData?['name'] ?? '');
+    _widthController = TextEditingController(
+        text: widget.boxData?['width']?.toStringAsFixed(1) ?? '');
+    _heightController = TextEditingController(
+        text: widget.boxData?['height']?.toStringAsFixed(1) ?? '');
+    _depthController = TextEditingController(
+        text: widget.boxData?['depth']?.toStringAsFixed(1) ?? '');
+    _hasCompartments = widget.boxData?['hasCompartments'] == 1;
+    _compartmentsCount = widget.boxData?['compartmentsCount'];
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _widthController.dispose();
+    _heightController.dispose();
+    _depthController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (_nameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(translate('nameCannotBeEmpty'))),
+      );
+      return;
+    }
+
+    if (_widthController.text.isEmpty ||
+        _heightController.text.isEmpty ||
+        _depthController.text.isEmpty ||
+        (_hasCompartments &&
+            (_compartmentsCount == null || _compartmentsCount == 0))) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(translate('fillAllFields'))),
+      );
+      return;
+    }
+
+    final boxData = {
+      'name': _nameController.text.trim(),
+      'hasCompartments': _hasCompartments ? 1 : 0,
+      'compartmentsCount': _hasCompartments ? (_compartmentsCount ?? 0) : 0,
+      'width':
+          double.tryParse(_widthController.text.replaceAll(',', '.')) ?? 0.0,
+      'height':
+          double.tryParse(_heightController.text.replaceAll(',', '.')) ?? 0.0,
+      'depth':
+          double.tryParse(_depthController.text.replaceAll(',', '.')) ?? 0.0,
+    };
+
+    try {
+      final result = await DatabaseHelper().insertBox(boxData);
+      if (result == -1) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(translate('duplicateBoxError'))),
+        );
+      } else {
+        widget.onSave(boxData);
+        if (mounted) {
+          Navigator.pop(context);
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving box: $e')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.boxData == null
+            ? translate('addBox')
+            : translate('editBox')),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ListView(
+          children: [
+            TextField(
+              controller: _nameController,
+              decoration: InputDecoration(
+                labelText: translate('boxName'),
+                hintText: translate('enterBoxName'),
+                border: const OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SwitchListTile(
+              title: Text(translate('hasCompartments')),
+              value: _hasCompartments,
+              onChanged: (value) {
+                setState(() {
+                  _hasCompartments = value;
+                  if (!value) {
+                    _compartmentsCount = null;
+                  }
+                });
+              },
+            ),
+            if (_hasCompartments)
+              TextField(
+                keyboardType: TextInputType.number,
+                onChanged: (value) =>
+                    _compartmentsCount = int.tryParse(value) ?? 0,
+                decoration: InputDecoration(
+                  labelText: translate('compartmentsCount'),
+                  hintText: translate('enterCompartmentsCount'),
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _widthController,
+                    keyboardType:
+                        TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      labelText: translate('width'),
+                      border: const OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _heightController,
+                    keyboardType:
+                        TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      labelText: translate('height'),
+                      border: const OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _depthController,
+                    keyboardType:
+                        TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      labelText: translate('depth'),
+                      border: const OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _save,
+              child: Text(translate('save')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -1,0 +1,123 @@
+import 'package:flutter/material.dart';
+import 'dart:math';
+
+class ShelfUnitRenderer {
+  static const double scaleFactor = 0.12; // Skala wizualizacji
+  static const double shelfSpacing = 2.0; // Przerwa między półkami
+  static const double margin = 2.0; // Margines od góry/dół/lewo/prawo
+
+  static Widget buildShelfUnit(
+      Map<String, dynamic> shelfUnit, List<Map<String, dynamic>> shelves) {
+    final bool sameShelf = shelfUnit['same_shelf'] == 1;
+    final bool isHorizontal = shelfUnit['is_horizontal'] == 1;
+    final int shelfCount = shelfUnit['shelf_count'];
+
+    // Domyślne wartości dla szerokości i wysokości regału
+    double shelfUnitWidth = 0.0;
+    double shelfUnitHeight = 0.0;
+
+    if (sameShelf) {
+      // Półki takie same
+      final double shelfWidth = shelves.first['width'] ?? 0.0;
+      final double shelfHeight = shelves.first['height'] ?? 0.0;
+
+      if (isHorizontal) {
+        shelfUnitWidth = shelfWidth + margin * 2;
+        shelfUnitHeight = (shelfHeight * shelfCount) +
+            (shelfSpacing * (shelfCount + 1)) +
+            margin * 2;
+      } else {
+        shelfUnitWidth = (shelfWidth * shelfCount) +
+            (shelfSpacing * (shelfCount + 1)) +
+            margin * 2;
+        shelfUnitHeight = shelfHeight + margin * 2;
+      }
+    } else {
+      // Półki różne
+      if (isHorizontal) {
+        shelfUnitWidth = shelves.fold<double>(
+              0.0,
+              (maxWidth, shelf) => max(maxWidth, shelf['width'] ?? 0.0),
+            ) +
+            margin * 2;
+
+        shelfUnitHeight = shelves.fold<double>(
+          margin * 2,
+          (sumHeight, shelf) =>
+              sumHeight + (shelf['height'] ?? 0.0) + shelfSpacing,
+        );
+      } else {
+        shelfUnitWidth = shelves.fold<double>(
+          margin * 2,
+          (sumWidth, shelf) =>
+              sumWidth + (shelf['width'] ?? 0.0) + shelfSpacing,
+        );
+
+        shelfUnitHeight = shelves.fold<double>(
+              0.0,
+              (maxHeight, shelf) => max(maxHeight, shelf['height'] ?? 0.0),
+            ) +
+            margin * 2;
+      }
+    }
+
+    // Rysowanie półek
+    return Container(
+      margin: const EdgeInsets.only(right: 20),
+      width: shelfUnitWidth / scaleFactor,
+      height: shelfUnitHeight / scaleFactor,
+      decoration: BoxDecoration(
+        color: Colors.grey[300],
+        border: Border.all(color: Colors.black, width: 2),
+      ),
+      child: Stack(
+        children: shelves.asMap().entries.map((entry) {
+          final int index = entry.key;
+          final Map<String, dynamic> shelf = entry.value;
+
+          double shelfTop;
+          double shelfLeft;
+
+          if (sameShelf) {
+            shelfTop = isHorizontal
+                ? index * (shelf['height'] ?? 0.0 + shelfSpacing) + shelfSpacing
+                : margin;
+            shelfLeft = isHorizontal
+                ? margin
+                : index * (shelf['width'] ?? 0.0 + shelfSpacing) + shelfSpacing;
+          } else {
+            shelfTop = isHorizontal
+                ? shelves.sublist(0, index).fold<double>(
+                      shelfSpacing,
+                      (sum, s) => sum + (s['height'] ?? 0.0) + shelfSpacing,
+                    )
+                : margin;
+            shelfLeft = isHorizontal
+                ? margin
+                : shelves.sublist(0, index).fold<double>(
+                      shelfSpacing,
+                      (sum, s) => sum + (s['width'] ?? 0.0) + shelfSpacing,
+                    );
+          }
+
+          return Positioned(
+            top: shelfTop / scaleFactor,
+            left: shelfLeft / scaleFactor,
+            width: (shelf['width'] ?? 0.0) / scaleFactor,
+            height: (shelf['height'] ?? 0.0) / scaleFactor,
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 1),
+              decoration: BoxDecoration(
+                color: Colors.brown[200],
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: Center(
+                child: Text('Półka ${shelf['shelf_number']}'),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}

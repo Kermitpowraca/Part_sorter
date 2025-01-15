@@ -1,0 +1,58 @@
+jak się nazywa ten komentarz który wyskakuje od dołu ?
+
+ChatGPT
+Ten komentarz, który wyskakuje od dołu, 
+to SnackBar w Flutterze. Jest to widget 
+służący do wyświetlania krótkich wiadomości 
+na dole ekranu, zazwyczaj używany do powiadomień, 
+potwierdzeń akcji lub błędów.
+
+
+
+Logika rysowania regału:
+
+Przypadek 1: 
+
+Półki są takie same poziome (same_shelf == 1) is_horizontal == 1 (poziomo):
+
+Szerokość regału: width (z tabeli shelves) + 4cm. 
+Wysokość regału: shelfcount (liczba półek) × height + 2cm x (shelf_count+1).
+
+rysowanie półek: 
+od lewej krawędzi regału 2cm + szerokość półki + 2cm 
+od dolnej krawędzi regału 2cm + ((wysokość półki +2cm przerwy)x ilość półek) + 2cm
+
+Przypadek 2:
+
+Półki są takie same ale są pionowe (same_shelf == 1) is_horizontal == 0 (pionowo):
+
+Szerokość regału: shelv_count x width + 2cm x (shelf_count+1).
+Wysokość regału: height + 4cm
+
+rysowanie półek: 
+od lewej krawędzi regału  2cm + ((szerokość półki +2cm przerwy)x ilość półek) + 2cm
+od dolnej krawędzi regału 2cm + wysokość półki + 2cm 
+
+Przypadek 3:
+
+Półki są inne i są poziome (same_shelf == 0) is_horizontal == 1 (poziomo):
+
+Szerokość regału:  największe width (z tabeli shelves) + 4cm.
+Wysokość regału: 4cm + height (shelf_number =1)+height (shelf_number =2)+height (shelf_number =3)... tyle ile jest półek 
+
+rysowanie półek: 
+od lewej krawędzi regału  2cm + szerokość półki najszerszej + 2cm
+od dolnej krawędzi regału 2cm + wysokość półki nr1 + 2cm przerwy + wysokość półki nr2+ 2cm przerwy+ wysokość półki nr3+ 2cm przerwy... (tyle ile jest półek) + 2cm
+
+Przypadek 4:
+
+Półki są różne (same_shelf == 0) is_horizontal == 0 (pionowo):
+
+Szerokość regału:  4cm + width (shelf_number =1)+width (shelf_number =2)+width (shelf_number =3)... tyle ile jest półek 
+Wysokość regału: największa height + 4cm
+
+rysowanie półek: 
+od lewej krawędzi regału  2cm + szerokość półki nr1 + 2cm przerwy + szerokość półki nr2+ 2cm przerwy+ szerokość półki nr3+ 2cm przerwy... (tyle ile jest półek) + 2cm
+od dolnej krawędzi regału 2cm + wysokość półki najwyższej + 2cm 
+
+
