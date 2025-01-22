@@ -123,20 +123,22 @@ class ShelfUnitRenderer {
                 color: const Color.fromARGB(255, 180, 153, 103),
                 border: border,
               ),
-              child: Center(
-                child: Text(
-                  'Półka ${shelf['shelf_number']}',
-                  style: const TextStyle(
-                    fontSize: 12, // Stały rozmiar tekstu
-                    color: Colors.black,
-                  ),
-                  textAlign: TextAlign.center,
+              child: Stack(children: [
+                Positioned(
+                  bottom: 2,
+                  right: 2,
+                  child: Text('Półka ${shelf['shelf_number']}',
+                      style: const TextStyle(
+                        fontSize: 6, // Stały rozmiar tekstu
+                        color: Colors.black54,
+                      )),
                 ),
-              ),
+              ]),
             ),
           );
         }).toList(),
       ),
     );
+    // Nazwa regału pod nim
   }
 }

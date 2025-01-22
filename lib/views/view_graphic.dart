@@ -166,7 +166,7 @@ class _GraphicViewState extends State<GraphicView> {
                   children: [
                     // Tło lewej strony
                     Container(
-                      color: Colors.blueAccent.withOpacity(0.2),
+                      color: const Color.fromARGB(255, 29, 76, 156),
                     ),
                     Align(
                       alignment: Alignment.center,
@@ -196,7 +196,7 @@ class _GraphicViewState extends State<GraphicView> {
                                         shelfUnit['height'] ?? 100.0;
 
                                     final widthScale =
-                                        maxWidth * 0.7 / shelfWidth;
+                                        maxWidth * 1 / shelfWidth;
                                     final heightScale =
                                         maxHeight * 0.6 / shelfHeight;
                                     final dynamicScale =
