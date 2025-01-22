@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_translate/flutter_translate.dart';
 import 'container_manager_view.dart';
 import '../database_helper.dart';
 import 'package:logger/logger.dart';
-import '../shelf_unit_renderer.dart';
 import 'view_graphic.dart';
 import 'view_text.dart';
 

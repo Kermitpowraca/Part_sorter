@@ -20,6 +20,7 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.8
   path_provider: ^2.0.12
+  carousel_slider: ^4.2.0
 
 dev_dependencies:
   
