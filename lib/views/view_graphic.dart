@@ -214,15 +214,21 @@ class _GraphicViewState extends State<GraphicView> {
                                           _showShelfOptionsDialog(
                                               shelfUnit, index),
                                       child: Center(
-                                        child: Transform.scale(
-                                          scale: scale,
-                                          alignment: Alignment.center,
-                                          child:
-                                              ShelfUnitRenderer.buildShelfUnit(
-                                            shelfUnit,
-                                            shelves,
-                                            1.0,
-                                          ),
+                                        child: Stack(
+                                          alignment: Alignment.bottomCenter,
+                                          children: [
+                                            // Regał
+                                            Transform.scale(
+                                              scale: scale,
+                                              alignment: Alignment.center,
+                                              child: ShelfUnitRenderer
+                                                  .buildShelfUnit(
+                                                shelfUnit,
+                                                shelves,
+                                                1.0,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     );

@@ -34,7 +34,8 @@ class ShelfUnitRenderer {
       );
     }
 
-    return SizedBox(
+    // Tworzymy widget regału z półkami
+    final shelfUnitWidget = SizedBox(
       width: shelfUnitWidth / scaleFactor,
       height: shelfUnitHeight / scaleFactor,
       child: Stack(
@@ -57,11 +58,9 @@ class ShelfUnitRenderer {
                 .fold<double>(0.0, (sum, s) => sum + (s['width'] ?? 0.0));
           }
 
-          // Obramowanie bez skalowania
           Border border;
           if (isHorizontal) {
             if (index == 0) {
-              // Pierwsza półka pozioma
               border = const Border(
                 top: BorderSide(color: Colors.black, width: 2),
                 left: BorderSide(color: Colors.black, width: 2),
@@ -69,7 +68,6 @@ class ShelfUnitRenderer {
                 bottom: BorderSide(color: Colors.black, width: 0.5),
               );
             } else if (index == shelves.length - 1) {
-              // Ostatnia półka pozioma
               border = const Border(
                 left: BorderSide(color: Colors.black, width: 2),
                 right: BorderSide(color: Colors.black, width: 2),
@@ -77,7 +75,6 @@ class ShelfUnitRenderer {
                 top: BorderSide(color: Colors.black, width: 0.5),
               );
             } else {
-              // Środkowe półki poziome
               border = const Border(
                 left: BorderSide(color: Colors.black, width: 2),
                 right: BorderSide(color: Colors.black, width: 2),
@@ -87,7 +84,6 @@ class ShelfUnitRenderer {
             }
           } else {
             if (index == 0) {
-              // Pierwsza półka pionowa
               border = const Border(
                 top: BorderSide(color: Colors.black, width: 2),
                 left: BorderSide(color: Colors.black, width: 2),
@@ -95,7 +91,6 @@ class ShelfUnitRenderer {
                 right: BorderSide(color: Colors.black, width: 0.5),
               );
             } else if (index == shelves.length - 1) {
-              // Ostatnia półka pionowa
               border = const Border(
                 top: BorderSide(color: Colors.black, width: 2),
                 right: BorderSide(color: Colors.black, width: 2),
@@ -103,7 +98,6 @@ class ShelfUnitRenderer {
                 left: BorderSide(color: Colors.black, width: 0.5),
               );
             } else {
-              // Środkowe półki pionowe
               border = const Border(
                 top: BorderSide(color: Colors.black, width: 2),
                 bottom: BorderSide(color: Colors.black, width: 2),
@@ -123,22 +117,49 @@ class ShelfUnitRenderer {
                 color: const Color.fromARGB(255, 180, 153, 103),
                 border: border,
               ),
-              child: Stack(children: [
-                Positioned(
-                  bottom: 2,
-                  right: 2,
-                  child: Text('Półka ${shelf['shelf_number']}',
+              child: Stack(
+                children: [
+                  Positioned(
+                    bottom: 2,
+                    right: 2,
+                    child: Text(
+                      'Półka ${shelf['shelf_number']}',
                       style: const TextStyle(
                         fontSize: 6, // Stały rozmiar tekstu
                         color: Colors.black54,
-                      )),
-                ),
-              ]),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         }).toList(),
       ),
     );
-    // Nazwa regału pod nim
+
+    // Zwracamy widok jako Column
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Regał (podlega skalowaniu)
+        shelfUnitWidget,
+        // Nazwa regału (nie podlega skalowaniu)
+        Padding(
+          padding: const EdgeInsets.only(top: 8.0), // Odstęp od regału
+          child: IgnorePointer(
+            child: Text(
+              shelfUnit['name'] ?? 'Regał',
+              style: const TextStyle(
+                fontSize: 16, // Nazwa regału ma stały rozmiar
+                fontWeight: FontWeight.bold,
+                color: Colors.black, // Kolor tekstu
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
