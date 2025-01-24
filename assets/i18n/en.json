@@ -58,6 +58,7 @@
   "compartmentsCount": "Number of compartments",
   "enterCompartmentsCount": "Enter number of compartments",
   "rememberExternalDimensions": "Remember to provide external dimensions.",
+  "confirmation": "Confirmation",
   "pleaseProvideInternalDimensions": "Remember to Provide Internal Dimensions",
   "enterBoxName": "Enter box name",
   "width": "Width",
@@ -113,7 +114,7 @@
     "addFeature": "Add Feature",
     "zoomIn": "Zoom In",
     "zoomOut": "Zoom Out",
-    "shelfSelected": "Shelf selected",
+    "shelfSelected": "Shelf selected: {name}",
     "boxSelected": "Box selected",
     "exhibitSelected": "Exhibit selected",
     "selected": "Selected",
@@ -121,6 +122,20 @@
     "boxOptions": "Box Options",
   "rotated": "Rotated",
   "deleteBox": "Are you sure you want to delete the box",
-  "boxDeleted": "The box has been deleted"
+  "boxDeleted": "The box has been deleted",
+  "tapAndHoldToEditOrDelete": "Tap and hold to edit or delete",
+  "shelfOptionsFor": "Options for shelf",
+  "editName": "Edit name",
+  "deleteShelf": "Delete shelf",
+   "graphicView": "Graphic",
+  "textView": "Text",
+  "view": "View:",
+  "exhibitOptions": "Exhibit options",
+  "deleteExhibit": "Delete exhibit",
+  "confirmDeleteExhibit": "Are you sure you want to delete the exhibit \"{name}\"?",
+  "enterShelfName": "Enter shelf name",
+  "shelfName": "Shelf name",
+  "shelfAdded": "Shelf added: {name}",
+  "addShelfError": "Failed to add shelf:"
 
 }

@@ -146,12 +146,14 @@ class ShelfUnitRenderer {
         shelfUnitWidget,
         // Nazwa regału (nie podlega skalowaniu)
         Padding(
-          padding: const EdgeInsets.only(top: 8.0), // Odstęp od regału
+          padding: const EdgeInsets.only(top: 0.0), // Odstęp od regału
           child: IgnorePointer(
             child: Text(
-              shelfUnit['name'] ?? 'Regał',
+              shelfUnit['customName'] ??
+                  shelfUnit['name'] ??
+                  'Regał', // Użyj customName, jeśli istnieje
               style: const TextStyle(
-                fontSize: 16, // Nazwa regału ma stały rozmiar
+                fontSize: 6, // Nazwa regału ma stały rozmiar
                 fontWeight: FontWeight.bold,
                 color: Colors.black, // Kolor tekstu
               ),

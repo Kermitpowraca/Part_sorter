@@ -96,7 +96,15 @@ class ManageStorageViewState extends State<ManageStorageView> {
                     await _addShelfUnit(shelfUnit); // Dodanie regału
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Wybrano regał: ${shelfUnit['name']}'),
+                        content: Text(
+                          translate(
+                            'shelfSelected', // Klucz tłumaczenia
+                            args: {
+                              'name': shelfUnit['name']
+                            }, // Dynamiczna wartość
+                          ),
+                        ),
+                        duration: const Duration(seconds: 1),
                       ),
                     );
                   },
@@ -125,18 +133,64 @@ class ManageStorageViewState extends State<ManageStorageView> {
         'shelves': shelves, // Dodajemy półki do regału
       };
 
+      // Pokaż dodatkowe okno dialogowe z pytaniem o nazwę
+      String? customName = await _askForShelfName(shelfUnit['name']);
+
       // Dodajemy regał do listy wybranych regałów
       setState(() {
-        selectedShelfUnits.add(updatedShelfUnit);
+        selectedShelfUnits.add({
+          ...updatedShelfUnit,
+          'customName':
+              customName ?? shelfUnit['name'], // Ustawiamy nazwę tylko lokalnie
+        });
       });
 
-      _logger.i('Dodano regał: ${shelfUnit['name']}');
-    } catch (e) {
-      _logger.e('Błąd podczas dodawania regału: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Nie udało się dodać regału: $e')),
+        SnackBar(
+          content: Text(
+            translate('shelfAdded',
+                args: {'name': customName ?? shelfUnit['name']}),
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${translate('addShelfError')} $e')),
       );
     }
+  }
+
+  Future<String?> _askForShelfName(String defaultName) async {
+    final TextEditingController nameController =
+        TextEditingController(text: defaultName);
+
+    return showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(translate('enterShelfName')),
+          content: TextField(
+            controller: nameController,
+            decoration: InputDecoration(
+              labelText: translate('shelfName'),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(null), // Anuluj
+              child: Text(translate('cancel')),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(nameController.text); // Zwróć nazwę
+              },
+              child: Text(translate('save')),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showBoxesDialog() async {
@@ -231,24 +285,6 @@ class ManageStorageViewState extends State<ManageStorageView> {
     );
   }
 
-  void _rotateBox(int index) {
-    setState(() {
-      // Pobierz kopię mapy, aby uniknąć modyfikacji oryginału
-      final box = Map<String, dynamic>.from(selectedBoxes[index]);
-
-      // Zamiana szerokości i wysokości
-      final temp = box['width'];
-      box['width'] = box['depth'];
-      box['depth'] = temp;
-
-      // Nadpisz zmieniony box w liście
-      selectedBoxes[index] = box;
-
-      // Logowanie zmiany
-      _logger.i('Box rotated: $box');
-    });
-  }
-
   void _showSelectionDialog() {
     showDialog(
       context: context,
@@ -295,94 +331,6 @@ class ManageStorageViewState extends State<ManageStorageView> {
     );
   }
 
-  void _showBoxOptionsDialog(int index, Map<String, dynamic> box) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('${translate('boxOptions')} - ${box['name']}'),
-          content: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.rotate_left),
-                tooltip: translate('rotated'),
-                onPressed: () {
-                  Navigator.of(context).pop(); // Zamknięcie dialogu
-                  _rotateBox(index); // Wywołanie funkcji obracania
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.info_outline),
-                tooltip: 'Szczegóły',
-                onPressed: () {
-                  Navigator.of(context).pop(); // Zamknięcie dialogu
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Szczegóły dla: ${box['name']}'),
-                    ),
-                  );
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete),
-                onPressed: () {
-                  Navigator.of(context).pop(); // Zamknięcie dialogu
-                  _confirmDelete(box);
-                },
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(translate('cancel')),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _confirmDelete(Map<String, dynamic> box) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(translate('confirmDelete')),
-          content: Text(
-            '${translate('deleteBox')} "${box['name']}"?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(), // Anuluj
-              child: Text(translate('no')),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Zamknięcie dialogu
-                _deleteBox(box); // Usuń pudełko
-              },
-              child: Text(translate('yes')),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _deleteBox(Map<String, dynamic> box) {
-    setState(() {
-      selectedBoxes.remove(box); // Usuń pudełko z listy
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${translate('boxDeleted')} "${box['name']}"'),
-      ),
-    );
-  }
-
   void _navigateToContainerManager() {
     Navigator.push(
       context,
@@ -416,19 +364,20 @@ class ManageStorageViewState extends State<ManageStorageView> {
         title: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            const Text('Widok:', style: TextStyle(color: Colors.black)),
+            Text(translate('view'),
+                style: const TextStyle(color: Colors.black)),
             const SizedBox(width: 8),
             SegmentedButton(
-              segments: const [
+              segments: [
                 ButtonSegment(
                   value: 'graficzny',
-                  label: Text('Graficzny'),
-                  icon: Icon(Icons.grid_view),
+                  label: Text(translate('graphicView')), // Przetłumaczony tekst
+                  icon: const Icon(Icons.grid_view),
                 ),
                 ButtonSegment(
                   value: 'tekstowy',
-                  label: Text('Tekstowy'),
-                  icon: Icon(Icons.text_fields),
+                  label: Text(translate('textView')), // Przetłumaczony tekst
+                  icon: const Icon(Icons.text_fields),
                 ),
               ],
               selected: {selectedView},

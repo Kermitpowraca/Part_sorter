@@ -40,6 +40,7 @@
   "editCabinet": "Edytuj Regał",
   "deleteCabinet": "Usuń Regał",
   "deleteCabinetConfirmation": "Czy na pewno chcesz usunąć ten regał?",
+  "confirmation": "Potwierdzenie",
   "shelves": "Półki",
   "shelfContents": "Zawartość: {name}",
   "shelfEmpty": "Półka jest pusta!",
@@ -111,7 +112,7 @@
     "addFeature": "Dodaj pojemnik",
     "zoomIn": "Powiększ",
     "zoomOut": "Pomniejsz",
-    "shelfSelected": "Wybrano półkę",
+    "shelfSelected": "Wybrano regał: {name}",
     "boxSelected": "Wybrano pudełko",
     "exhibitSelected": "wybrano wystawę",
     "selected": "wybrane",
@@ -120,5 +121,22 @@
     "boxOptions": "Opcje pudełka",
   "rotated": "Obrócone",
   "deleteBox": "Czy na pewno chcesz usunąć pudełko",
-  "boxDeleted": "Pudełko zostało usunięte"
+  "boxDeleted": "Pudełko zostało usunięte",
+  "tapAndHoldToEditOrDelete": "Naciśnij i przytrzymaj, aby edytować lub usunąć",
+  "shelfOptionsFor": "Opcje dla regału",
+  "deleteShelf": "Usuń regał",
+  "graphicView": "Graficzny",
+  "textView": "Tekstowy",
+  "view": "Widok:",
+  "exhibitOptions": "Opcje dla wystawy",
+  "editName": "Edytuj nazwę",
+  "deleteExhibit": "Usuń wystawę",
+  "confirmDeleteExhibit": "Czy na pewno chcesz usunąć wystawę \"{name}\"?",
+  "enterShelfName": "Podaj nazwę regału",
+  "shelfName": "Nazwa regału",
+  "shelfAdded": "Dodano regał: {name}",
+  "addShelfError": "Nie udało się dodać regału:"
+
+
+ 
 }

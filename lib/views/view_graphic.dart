@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_translate/flutter_translate.dart';
 import '../shelf_unit_renderer.dart';
 
 class GraphicView extends StatefulWidget {
   final List<Map<String, dynamic>> selectedShelfUnits;
   final List<Map<String, dynamic>> selectedBoxes;
   final List<Map<String, dynamic>> selectedExhibits;
+
   final double scaleFactor;
 
   const GraphicView({
@@ -16,11 +18,221 @@ class GraphicView extends StatefulWidget {
   }) : super(key: key);
 
   @override
+  // ignore: library_private_types_in_public_api
   _GraphicViewState createState() => _GraphicViewState();
 }
 
 class _GraphicViewState extends State<GraphicView> {
   final PageController _pageController = PageController();
+
+  void _showExhibitOptionsDialog(int index, Map<String, dynamic> exhibit) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('${translate('exhibitOptions')} - ${exhibit['name']}'),
+          content: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.edit),
+                tooltip: translate('editName'), // Tłumaczenie tooltipa
+                onPressed: () {
+                  Navigator.of(context).pop(); // Zamknięcie dialogu
+                  _showEditExhibitNameDialog(exhibit, index);
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete),
+                tooltip: translate('deleteExhibit'), // Tłumaczenie tooltipa
+                onPressed: () {
+                  Navigator.of(context).pop(); // Zamknięcie dialogu
+                  _confirmDeleteExhibit(exhibit, index);
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child:
+                  Text(translate('cancel')), // Przetłumaczony tekst przycisku
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _confirmDeleteExhibit(Map<String, dynamic> exhibit, int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(translate('confirmation')), // Tłumaczenie tytułu
+          content: Text(
+            translate('confirmDeleteExhibit', args: {
+              'name': exhibit['name'],
+            }), // Tłumaczenie z dynamiczną nazwą wystawy
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(translate('no')), // Tłumaczenie przycisku "Nie"
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  widget.selectedExhibits.removeAt(index);
+                });
+                Navigator.of(context).pop(); // Zamknij dialog
+              },
+              child: Text(translate('yes')), // Tłumaczenie przycisku "Tak"
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showEditExhibitNameDialog(Map<String, dynamic> exhibit, int index) {
+    final TextEditingController nameController =
+        TextEditingController(text: exhibit['name']);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(translate('editName')), // Tłumaczenie tytułu
+          content: TextField(
+            controller: nameController,
+            decoration: InputDecoration(
+                labelText: translate('exhibitName')), // Tłumaczenie etykiety
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child:
+                  Text(translate('cancel')), // Tłumaczenie przycisku "Anuluj"
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  widget.selectedExhibits[index]['name'] = nameController.text;
+                });
+                Navigator.of(context).pop(); // Zamknij dialog
+              },
+              child: Text(translate('save')), // Tłumaczenie przycisku "Zapisz"
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _confirmDeleteBox(Map<String, dynamic> box) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(translate('confirmDelete')),
+          content: Text(
+            '${translate('deleteBox')} "${box['name']}"?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(), // Anuluj
+              child: Text(translate('no')),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Zamknięcie dialogu
+                _deleteBox(box); // Usuń pudełko
+              },
+              child: Text(translate('yes')),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _deleteBox(Map<String, dynamic> box) {
+    setState(() {
+      widget.selectedBoxes.remove(box); // Używaj widget.selectedBoxes
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${translate('boxDeleted')} "${box['name']}"'),
+      ),
+    );
+  }
+
+  void _rotateBox(int index) {
+    setState(() {
+      // Pobierz kopię mapy, aby uniknąć modyfikacji oryginału
+      final box = Map<String, dynamic>.from(
+          widget.selectedBoxes[index]); // Dodano widget.
+
+      // Zamiana szerokości i wysokości
+      final temp = box['width'];
+      box['width'] = box['depth'];
+      box['depth'] = temp;
+
+      // Nadpisz zmieniony box w liście
+      widget.selectedBoxes[index] = box; // Dodano widget.
+    });
+  }
+
+  void _showBoxOptionsDialog(int index, Map<String, dynamic> box) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('${translate('boxOptions')} - ${box['name']}'),
+          content: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.rotate_left),
+                tooltip: translate('rotated'),
+                onPressed: () {
+                  Navigator.of(context).pop(); // Zamknięcie dialogu
+                  _rotateBox(index); // Wywołanie funkcji obracania
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.info_outline),
+                tooltip: 'Szczegóły',
+                onPressed: () {
+                  Navigator.of(context).pop(); // Zamknięcie dialogu
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Szczegóły dla: ${box['name']}'),
+                    ),
+                  );
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: () {
+                  Navigator.of(context).pop(); // Zamknięcie dialogu
+                  _confirmDeleteBox(box);
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(translate('cancel')),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   void _previousPage() {
     if (_pageController.page!.toInt() > 0) {
@@ -46,21 +258,25 @@ class _GraphicViewState extends State<GraphicView> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Opcje dla regału: ${shelfUnit['name']}'),
+          title: Text('${translate('shelfOptionsFor')}: ${shelfUnit['name']}'),
           content: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               IconButton(
-                icon: const Icon(Icons.edit, color: Colors.blue),
-                tooltip: 'Edytuj nazwę',
+                icon: const Icon(
+                  Icons.edit,
+                ),
+                tooltip: translate('editName'), // Przetłumaczony tooltip
                 onPressed: () {
                   Navigator.of(context).pop(); // Zamknięcie dialogu
                   _showEditShelfNameDialog(shelfUnit, index);
                 },
               ),
               IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red),
-                tooltip: 'Usuń regał',
+                icon: const Icon(
+                  Icons.delete,
+                ),
+                tooltip: translate('deleteShelf'), // Przetłumaczony tooltip
                 onPressed: () {
                   Navigator.of(context).pop(); // Zamknięcie dialogu
                   _confirmDeleteShelfUnit(shelfUnit, index);
@@ -71,7 +287,8 @@ class _GraphicViewState extends State<GraphicView> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Anuluj'),
+              child:
+                  Text(translate('cancel')), // Przetłumaczony tekst przycisku
             ),
           ],
         );
@@ -88,15 +305,15 @@ class _GraphicViewState extends State<GraphicView> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Edytuj nazwę regału'),
+          title: Text(translate('editName')),
           content: TextField(
             controller: nameController,
-            decoration: const InputDecoration(labelText: 'Nazwa regału'),
+            decoration: InputDecoration(labelText: translate('cabinetName')),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Anuluj'),
+              child: Text(translate('cancel')),
             ),
             TextButton(
               onPressed: () {
@@ -106,7 +323,7 @@ class _GraphicViewState extends State<GraphicView> {
                 });
                 Navigator.of(context).pop(); // Zamknij dialog
               },
-              child: const Text('Zapisz'),
+              child: Text(translate('save')),
             ),
           ],
         );
@@ -114,20 +331,22 @@ class _GraphicViewState extends State<GraphicView> {
     );
   }
 
-  // funkcję usuwania regału
+  // Funkcja usuwania regału z tłumaczeniami
   void _confirmDeleteShelfUnit(Map<String, dynamic> shelfUnit, int index) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Potwierdzenie'),
+          title: Text(translate('confirmation')), // Tłumaczenie tytułu
           content: Text(
-            'Czy na pewno chcesz usunąć regał "${shelfUnit['name']}"?',
+            translate('confirmDeleteContainer', args: {
+              'name': shelfUnit['name']
+            }), // Tłumaczenie treści z nazwą regału
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Nie'),
+              child: Text(translate('no')), // Tłumaczenie przycisku "Nie"
             ),
             TextButton(
               onPressed: () {
@@ -136,7 +355,7 @@ class _GraphicViewState extends State<GraphicView> {
                 });
                 Navigator.of(context).pop(); // Zamknij dialog
               },
-              child: const Text('Tak'),
+              child: Text(translate('yes')), // Tłumaczenie przycisku "Tak"
             ),
           ],
         );
@@ -210,25 +429,40 @@ class _GraphicViewState extends State<GraphicView> {
                                             : widget.scaleFactor;
 
                                     return GestureDetector(
-                                      onDoubleTap: () =>
+                                      onTap: () {
+                                        // Wyświetlamy przetłumaczoną wiadomość w SnackBarze
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                            content: Text(translate(
+                                                'tapAndHoldToEditOrDelete')), // Przetłumaczony tekst
+                                            duration: const Duration(
+                                                seconds:
+                                                    1), // Jak długo wiadomość jest widoczna
+                                          ),
+                                        );
+                                      },
+                                      onLongPress: () =>
                                           _showShelfOptionsDialog(
                                               shelfUnit, index),
-                                      child: Center(
-                                        child: Stack(
-                                          alignment: Alignment.bottomCenter,
-                                          children: [
-                                            // Regał
-                                            Transform.scale(
-                                              scale: scale,
-                                              alignment: Alignment.center,
-                                              child: ShelfUnitRenderer
-                                                  .buildShelfUnit(
-                                                shelfUnit,
-                                                shelves,
-                                                1.0,
-                                              ),
+                                      child: SizedBox(
+                                        width: shelfUnit[
+                                            'width'], // Ustaw szerokość regału
+                                        height: shelfUnit[
+                                            'height'], // Ustaw wysokość regału
+                                        child: Align(
+                                          alignment: Alignment
+                                              .center, // Wyrównanie regału w centrum
+                                          child: Transform.scale(
+                                            scale: scale,
+                                            alignment: Alignment.center,
+                                            child: ShelfUnitRenderer
+                                                .buildShelfUnit(
+                                              shelfUnit,
+                                              shelves,
+                                              1.0,
                                             ),
-                                          ],
+                                          ),
                                         ),
                                       ),
                                     );
@@ -277,7 +511,7 @@ class _GraphicViewState extends State<GraphicView> {
                       child: Stack(
                         children: [
                           Container(
-                            color: Colors.orangeAccent.withOpacity(0.3),
+                            color: Colors.orangeAccent,
                           ),
                           Center(
                             child: SingleChildScrollView(
@@ -285,28 +519,53 @@ class _GraphicViewState extends State<GraphicView> {
                               child: Row(
                                 children:
                                     widget.selectedExhibits.map((exhibit) {
+                                  final int index = widget.selectedExhibits
+                                      .indexOf(
+                                          exhibit); // Pobierz indeks wystawy
                                   return Padding(
                                     padding: const EdgeInsets.all(10),
-                                    child: Container(
-                                      width: (exhibit['width'] ?? 100) *
-                                          widget.scaleFactor,
-                                      height: (exhibit['height'] ?? 50) *
-                                          widget.scaleFactor,
-                                      decoration: BoxDecoration(
-                                        color: const Color.fromARGB(
-                                            255, 146, 61, 32),
-                                        borderRadius: BorderRadius.circular(10),
-                                        border: Border.all(
-                                            color: Colors.black, width: 2),
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          exhibit['name'] ?? 'Wystawa',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        // Wyświetlenie komunikatu po kliknięciu
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              translate(
+                                                  'tapAndHoldToEditOrDelete'),
+                                            ), // Przetłumaczony tekst
+                                            duration:
+                                                const Duration(seconds: 2),
                                           ),
-                                          textAlign: TextAlign.center,
+                                        );
+                                      },
+                                      onLongPress: () {
+                                        // Wywołanie dialogu z opcjami dla wystawy
+                                        _showExhibitOptionsDialog(
+                                            index, exhibit);
+                                      },
+                                      child: Container(
+                                        width: (exhibit['width'] ?? 100) *
+                                            widget.scaleFactor,
+                                        height: (exhibit['height'] ?? 50) *
+                                            widget.scaleFactor,
+                                        decoration: BoxDecoration(
+                                          color: const Color.fromARGB(
+                                              255, 146, 61, 32),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          border: Border.all(
+                                              color: Colors.black, width: 2),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            exhibit['name'] ?? 'Wystawa',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -318,13 +577,14 @@ class _GraphicViewState extends State<GraphicView> {
                         ],
                       ),
                     ),
+
                     // Dolny kontener - pudełka
                     Expanded(
                       flex: 1,
                       child: Stack(
                         children: [
                           Container(
-                            color: Colors.greenAccent.withOpacity(0.3),
+                            color: Colors.greenAccent,
                           ),
                           Align(
                             alignment: Alignment.bottomCenter,
@@ -335,29 +595,37 @@ class _GraphicViewState extends State<GraphicView> {
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: widget.selectedBoxes.map((box) {
+                                    final int index = widget.selectedBoxes
+                                        .indexOf(box); // Pobierz indeks pudełka
                                     return Padding(
                                       padding: const EdgeInsets.all(10),
-                                      child: Container(
-                                        width: (box['width'] ?? 100) *
-                                            widget.scaleFactor,
-                                        height: (box['height'] ?? 50) *
-                                            widget.scaleFactor,
-                                        decoration: BoxDecoration(
-                                          color: box['color'] ??
-                                              Colors.orangeAccent,
-                                          border: Border.all(
-                                              color: Colors.black, width: 2),
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            box['name'] ?? 'Pudełko',
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 12,
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          // Wywołanie funkcji _showBoxOptionsDialog po kliknięciu na pudełko
+                                          _showBoxOptionsDialog(index, box);
+                                        },
+                                        child: Container(
+                                          width: (box['width'] ?? 100) *
+                                              widget.scaleFactor,
+                                          height: (box['height'] ?? 50) *
+                                              widget.scaleFactor,
+                                          decoration: BoxDecoration(
+                                            color: box['color'] ??
+                                                Colors.orangeAccent,
+                                            border: Border.all(
+                                                color: Colors.black, width: 2),
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              box['name'] ?? 'Pudełko',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                              ),
+                                              textAlign: TextAlign.center,
                                             ),
-                                            textAlign: TextAlign.center,
                                           ),
                                         ),
                                       ),
